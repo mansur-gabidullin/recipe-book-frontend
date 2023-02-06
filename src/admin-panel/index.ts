@@ -1,1 +1,4 @@
-export {AdminPanel as default} from "./AdminPanel"
+import {memo} from "react";
+import {AdminPanel} from "./components/AdminPanel";
+
+export default memo(AdminPanel);
