@@ -9,7 +9,7 @@ const queryClient = new QueryClient()
 const AdminPanel = lazy(() => import('./admin-panel'));
 const RecipeBook = lazy(() => import('./recipe-book'));
 
-function App() {
+export function App() {
     return (
         <QueryClientProvider client={queryClient}>
             <Suspense fallback={<ProgressCircle aria-label="Загрузка…" isIndeterminate/>}>
@@ -23,5 +23,3 @@ function App() {
         </QueryClientProvider>
     );
 }
-
-export default App;
