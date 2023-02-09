@@ -6,6 +6,8 @@ export type UserDTO = {
 
 export type AddUserCommandDTO = {
     login: string;
+    password: string;
+    password_confirm: string;
     email?: string
 }
 

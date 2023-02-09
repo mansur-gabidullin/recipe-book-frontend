@@ -5,7 +5,6 @@ export function fetchUsers() {
     return get('/users/').json<Array<UserDTO>>();
 }
 
-export function createUser(login: string) {
-    const body: AddUserCommandDTO = {login}
+export function createUser(body: AddUserCommandDTO) {
     return post('/users/', body).json<AddUserCommandResultDTO>();
 }
