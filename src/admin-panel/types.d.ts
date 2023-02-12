@@ -1,7 +1,19 @@
+export type UUID = string;
+
 export type UserDTO = {
-    id: number
+    uuid: UUID
     login: string
-    email?: string
+    is_removed: boolean
+    profile?: {
+        uuid: UUID
+        user_uuid: UUID
+        email: string
+        verified_email?: string
+        name?: string
+        nickname?: string
+        surname?: string
+        patronymic?: string
+    }
 }
 
 export type AddUserCommandDTO = {

@@ -21,3 +21,7 @@ export function get(url: string) {
 export function post(url: string, body: unknown) {
     return api.post(body, url)
 }
+
+export function del(url: string) {
+    return api.delete(url)
+}

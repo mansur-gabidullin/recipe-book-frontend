@@ -1,24 +1,31 @@
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
-import {fetchUsers, createUser} from "../api";
+import {fetchUsers, createUser, deleteUser} from "../api";
 
 const usersQueryKey = ['users']
 
 export function useUserList() {
+    const queryClient = useQueryClient()
+    const invalidateFetchUsers = () => queryClient.invalidateQueries(usersQueryKey)
+
     const {
         data: users = [],
-        isLoading: isLoadingUsers,
-    } = useQuery({queryKey: usersQueryKey, queryFn: fetchUsers})
+        isLoading: isUsersLoading,
+    } = useQuery(usersQueryKey, fetchUsers)
 
-    const queryClient = useQueryClient()
+    const {
+        mutate: addUser,
+        isLoading: isUserCreating
+    } = useMutation(createUser, {onSuccess: invalidateFetchUsers})
 
-    const {mutate: addUser, isLoading: isCreatingUser} = useMutation({
-        mutationFn: createUser,
-        onSuccess: () => queryClient.invalidateQueries({queryKey: usersQueryKey}),
-    })
+    const {
+        mutate: removeUser,
+        isLoading: isUserDeleting
+    } = useMutation(deleteUser, {onSuccess: invalidateFetchUsers})
 
     return {
         users,
         addUser,
-        isLoading: isLoadingUsers || isCreatingUser
+        removeUser,
+        isLoading: isUsersLoading || isUserCreating || isUserDeleting
     }
 }
