@@ -1,10 +1,12 @@
-import {PropsWithChildren} from "react";
+import {Outlet} from "react-router-dom";
 
-export function Layout(props: PropsWithChildren) {
+import LogoutButton from "../../auth/components/LogoutButton";
+
+export function Layout() {
     return (
         <div>
-            Layout
-            {props.children}
+            <LogoutButton/>
+            <Outlet/>
         </div>
     )
 }

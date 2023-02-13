@@ -5,6 +5,10 @@ export function fetchUsers() {
     return get('/users/').json<Array<UserDTO>>();
 }
 
+export function fetchUserProfile() {
+    return get('/users/profile').json<UserDTO>();
+}
+
 export function createUser(body: AddUserCommandDTO) {
     return post('/users/', body).json<AddUserCommandResultDTO>();
 }

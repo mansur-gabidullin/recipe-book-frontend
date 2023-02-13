@@ -1,15 +1,17 @@
-import {Redirect, Route, Switch} from "wouter";
+import {Navigate, Route, Routes} from "react-router-dom";
 
 import {Layout} from "./Layout";
 import {UserList} from "./UserList";
+import {PageNotFound} from "../../shared/components/PageNotFound";
 
 export function AdminPanel() {
     return (
-        <Layout>
-            <Switch>
-                <Route path="/"><Redirect to="/users"/></Route>
-                <Route path="/users"><UserList/></Route>
-            </Switch>
-        </Layout>
+        <Routes>
+            <Route element={<Layout/>}>
+                <Route index element={<Navigate to="./users" replace/>}/>
+                <Route path="/users" element={<UserList/>}/>
+                <Route path="/*" element={<PageNotFound/>}/>
+            </Route>
+        </Routes>
     )
 }
