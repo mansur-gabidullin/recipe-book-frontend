@@ -4,11 +4,10 @@ export type UserDTO = {
     uuid: UUID
     login: string
     is_removed: boolean
+    is_active: boolean
     profile?: {
-        uuid: UUID
-        user_uuid: UUID
         email: string
-        verified_email?: string
+        phone_number?: string
         name?: string
         nickname?: string
         surname?: string

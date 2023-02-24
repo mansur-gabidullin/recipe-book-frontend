@@ -3,12 +3,12 @@ import FormDataAddon from "wretch/addons/formData"
 import QueryStringAddon from "wretch/addons/queryString"
 import {QueryClient} from "@tanstack/react-query";
 
-import {AuthenticationError, CriticalError} from "./exceptions";
+import {AuthenticationError} from "./exceptions";
 import {ACCESS_TOKEN_STORAGE_KEY, AUTH_REDIRECT_LOCATION_STORAGE_KEY} from "./constants";
 
 
 function useErrorBoundary(error: unknown) {
-    return error instanceof CriticalError;
+    return error instanceof Error;
 }
 
 function onError(error: unknown) {
