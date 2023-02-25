@@ -5,7 +5,7 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { AccessPermissionError, AuthenticationError, CriticalError } from "./exceptions";
 import { AUTH_REDIRECT_LOCATION_STORAGE_KEY } from "@/shared/constants";
-import type { Token, TokenData, TokenType } from "@/pages/users/types";
+import type { Token, TokenData } from "@/pages/users/types";
 
 function useErrorBoundary(error: unknown) {
     return error instanceof CriticalError || error instanceof SyntaxError;
@@ -41,10 +41,9 @@ export function setAuthRedirectLocation(location: string) {
 }
 
 let accessToken: Token | null = null;
-let accessTokenType: TokenType | null = null;
 
-function transformTokenToHeaderValue(token: Token) {
-    return accessTokenType ? `${accessTokenType} ${token}` : "";
+function transformTokenToHeaderValue(token: Token | null) {
+    return token ? `Bearer ${token}` : "";
 }
 
 const api = wretch("/api")
@@ -54,6 +53,9 @@ const api = wretch("/api")
         // Renew credentials
         const { access_token } = await wretch()
             .post(null, "/api/auth/refresh")
+            .error(422, () => {
+                throw unauthorizedError;
+            })
             .unauthorized(() => {
                 throw unauthorizedError;
             })
@@ -78,7 +80,7 @@ const api = wretch("/api")
     .addon(QueryStringAddon);
 
 function getApiWithAuth() {
-    return accessToken ? api.auth(transformTokenToHeaderValue(accessToken)) : api;
+    return api.auth(transformTokenToHeaderValue(accessToken));
 }
 
 export function get(url: string) {
@@ -98,14 +100,14 @@ export function del(url: string) {
 }
 
 export async function authenticate(username: string, password: string) {
-    const { access_token, token_type } = await postFormData("/auth/token", {
+    const { access_token } = await postFormData("/auth/token", {
         username,
         password,
     }).json<TokenData>();
     accessToken = access_token;
-    accessTokenType = token_type.charAt(0).toUpperCase() + token_type.slice(1);
 }
 
-export function logout() {
+export async function logout() {
     accessToken = null;
+    await post("/auth/logout").json();
 }
