@@ -8,7 +8,7 @@ import { AUTH_REDIRECT_LOCATION_STORAGE_KEY } from "@/shared/constants";
 import type { Token, TokenData } from "@/pages/users/types";
 
 function useErrorBoundary(error: unknown) {
-    return error instanceof CriticalError || error instanceof SyntaxError;
+    return error instanceof CriticalError || error instanceof SyntaxError || error instanceof TypeError;
 }
 
 function onError(error: unknown) {
@@ -60,6 +60,8 @@ const api = wretch("/api")
                 throw unauthorizedError;
             })
             .json<TokenData>();
+
+        accessToken = access_token;
 
         // Replay the original request with new credentials
         return await request
