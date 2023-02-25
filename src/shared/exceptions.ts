@@ -1,10 +1,10 @@
 export class ApplicationError extends Error {
-    name: string = 'ApplicationError';
+    name = "ApplicationError";
 
     constructor(messageOrError?: string | Error) {
         const error = messageOrError instanceof Error ? messageOrError : undefined;
 
-        let message = typeof messageOrError === 'string' ? messageOrError : error?.message;
+        let message = typeof messageOrError === "string" ? messageOrError : error?.message;
 
         try {
             if (message) {
@@ -17,20 +17,20 @@ export class ApplicationError extends Error {
 
         super(message);
 
-        const captureError = error || this
+        const captureError = error ?? this;
 
         Error.captureStackTrace(captureError, captureError.constructor);
     }
 }
 
 export class CriticalError extends ApplicationError {
-    name = 'CriticalError';
+    name = "CriticalError";
 }
 
 export class AuthenticationError extends CriticalError {
-    name = 'AuthenticationError';
+    name = "AuthenticationError";
 }
 
 export class AccessPermissionError extends CriticalError {
-    name = 'AccessPermissionError';
+    name = "AccessPermissionError";
 }
