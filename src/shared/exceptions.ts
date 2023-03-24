@@ -23,6 +23,10 @@ export class ApplicationError extends Error {
     }
 }
 
+export class CSRFTokenError extends ApplicationError {
+    name = "CSRFTokenError";
+}
+
 export class CriticalError extends ApplicationError {
     name = "CriticalError";
 }

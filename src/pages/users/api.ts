@@ -14,5 +14,5 @@ export async function createUser(body: AddUserCommandDTO) {
 }
 
 export async function deleteUser(uuid: UUID) {
-    return await del(`/users/${uuid}`).res();
+    return await del(`/users/${uuid}`).json();
 }

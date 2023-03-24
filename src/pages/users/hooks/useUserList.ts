@@ -1,8 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchUsers, createUser, deleteUser, fetchUserProfile } from "../api";
+import { fetchUsers, createUser, deleteUser } from "../api";
 
 const usersQueryKey = ["users"];
-const userProfileQueryKey = ["profile"];
 
 export function useUserList() {
     const queryClient = useQueryClient();
@@ -11,10 +10,6 @@ export function useUserList() {
     };
 
     const { data: users = [], isLoading: isUsersLoading } = useQuery(usersQueryKey, fetchUsers);
-
-    const { data: user, isLoading: isUserProfileLoading } = useQuery(userProfileQueryKey, fetchUserProfile);
-
-    console.log(user);
 
     const { mutate: addUser, isLoading: isUserCreating } = useMutation(createUser, { onSuccess: invalidateFetchUsers });
 
@@ -26,6 +21,6 @@ export function useUserList() {
         users,
         addUser,
         removeUser,
-        isLoading: isUsersLoading || isUserCreating || isUserDeleting || isUserProfileLoading,
+        isLoading: isUsersLoading || isUserCreating || isUserDeleting,
     };
 }

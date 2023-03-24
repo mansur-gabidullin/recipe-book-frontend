@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import { Login } from "./components/Login";
 import { PageNotFound } from "@/shared/components/PageNotFound";
+import { Login } from "./Login";
 
 export default function Auth() {
     return (

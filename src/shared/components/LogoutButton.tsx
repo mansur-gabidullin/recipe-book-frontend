@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 
 import { LOGIN_PAGE_ROUTE } from "@/shared/constants";
-import { logout, setAuthRedirectLocation } from "@/shared/api";
+import { logout } from "@/shared/api";
+import { setAuthRedirectLocation } from "@/shared/helpers";
 
 export default function LogoutButton() {
     const location = useLocation();
@@ -14,7 +15,7 @@ export default function LogoutButton() {
         }
 
         setAuthRedirectLocation(location.pathname);
-        logout();
+        void logout();
     }, [isLoggingOut, location.pathname]);
 
     return isLoggingOut ? (

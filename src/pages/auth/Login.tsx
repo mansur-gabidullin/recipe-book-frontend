@@ -1,9 +1,13 @@
 import { type FormEventHandler, useState } from "react";
 import { Navigate } from "react-router-dom";
 
-import { authenticate, getAuthRedirectLocation, setAuthRedirectLocation } from "@/shared/api";
+import { authenticate } from "@/shared/api";
+import useAccessToken from "@/shared/hooks/useAccessToken";
+import { getAuthRedirectLocation, setAuthRedirectLocation } from "@/shared/helpers";
 
 export function Login() {
+    useAccessToken();
+
     const [isLoading, setIsLoading] = useState(false);
     const [redirectLocation, setRedirectLocation] = useState("");
     const [login, setLogin] = useState("");

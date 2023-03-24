@@ -1,11 +1,16 @@
-import wretch from "wretch";
+import wretch, { type FetchLike, type Wretch, type WretchOptions } from "wretch";
+import type { WretchError } from "wretch/types";
 import FormDataAddon from "wretch/addons/formData";
 import QueryStringAddon from "wretch/addons/queryString";
 import { QueryClient } from "@tanstack/react-query";
 
-import { AccessPermissionError, AuthenticationError, CriticalError } from "./exceptions";
-import { AUTH_REDIRECT_LOCATION_STORAGE_KEY } from "@/shared/constants";
-import type { Token, TokenData } from "@/pages/users/types";
+import { accessTokenQueryKey, CSRF_TOKEN_HEADER_KEY, DEFAULT_FAILURE_COUNT } from "@/shared/constants";
+import type { AccessTokenData, Token } from "@/pages/users/types";
+import { transformTokenToHeaderValue } from "@/shared/helpers";
+import { AccessPermissionError, AuthenticationError, CriticalError, CSRFTokenError } from "./exceptions";
+
+let accessToken: Token | null = null;
+let csrfToken: Token | null = null;
 
 function useErrorBoundary(error: unknown) {
     return error instanceof CriticalError || error instanceof SyntaxError || error instanceof TypeError;
@@ -15,98 +20,119 @@ function onError(error: unknown) {
     error instanceof Error && alert(error.message);
 }
 
+function onBeforeRetry(failureCount: number, error: unknown) {
+    return (
+        !(error instanceof CriticalError) &&
+        !(error instanceof CSRFTokenError) &&
+        failureCount < DEFAULT_FAILURE_COUNT - 1
+    );
+}
+
 export const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
             useErrorBoundary,
             onError,
+            retry: onBeforeRetry,
         },
         mutations: {
             useErrorBoundary,
             onError,
+            retry: onBeforeRetry,
         },
     },
 });
 
-export function getAuthRedirectLocation() {
-    return window.localStorage.getItem(AUTH_REDIRECT_LOCATION_STORAGE_KEY) ?? "/";
+function CSRFTokenMiddleware(next: FetchLike) {
+    return async (url: string, opts: WretchOptions) => {
+        const response = await next(url, opts);
+        csrfToken = response.headers.get(CSRF_TOKEN_HEADER_KEY);
+        return response;
+    };
 }
 
-export function setAuthRedirectLocation(location: string) {
-    if (!location) {
-        window.localStorage.removeItem(AUTH_REDIRECT_LOCATION_STORAGE_KEY);
-        return;
+async function unauthorizedHandler(error: WretchError, request: Wretch) {
+    const throwUnauthorizedError = () => {
+        throw new AuthenticationError(error);
+    };
+    const throwAccessPermissionError = () => {
+        throw new AccessPermissionError(error);
+    };
+
+    // Renew credentials
+    const data = await wretch()
+        .post(null, "/api/auth/refresh")
+        .unauthorized(throwUnauthorizedError)
+        .forbidden(throwUnauthorizedError)
+        .error(422, throwUnauthorizedError)
+        .json<AccessTokenData>();
+
+    accessToken = data.access_token;
+
+    await queryClient.invalidateQueries(accessTokenQueryKey);
+
+    // Replay the original request with new credentials
+    return await request
+        .auth(transformTokenToHeaderValue(accessToken))
+        .fetch()
+        .unauthorized(throwUnauthorizedError)
+        .forbidden(throwAccessPermissionError)
+        .json();
+}
+
+function csrfTokenErrorHandler(error: WretchError, originalRequest: Wretch) {
+    const headers = originalRequest._options?.headers || { [CSRF_TOKEN_HEADER_KEY]: csrfToken };
+    const hasCSRFToken = Boolean(headers[CSRF_TOKEN_HEADER_KEY]);
+
+    if (!hasCSRFToken) {
+        throw new CSRFTokenError(error);
     }
-    window.localStorage.setItem(AUTH_REDIRECT_LOCATION_STORAGE_KEY, location);
 }
 
-let accessToken: Token | null = null;
-
-function transformTokenToHeaderValue(token: Token | null) {
-    return token ? `Bearer ${token}` : "";
+function criticalErrorHandler(error: WretchError) {
+    throw new CriticalError(error);
 }
 
 const api = wretch("/api")
-    .catcher(401, async (error, request) => {
-        const unauthorizedError = new AuthenticationError(error);
-
-        // Renew credentials
-        const { access_token } = await wretch()
-            .post(null, "/api/auth/refresh")
-            .error(422, () => {
-                throw unauthorizedError;
-            })
-            .unauthorized(() => {
-                throw unauthorizedError;
-            })
-            .json<TokenData>();
-
-        accessToken = access_token;
-
-        // Replay the original request with new credentials
-        return await request
-            .auth(transformTokenToHeaderValue(access_token))
-            .fetch()
-            .unauthorized(() => {
-                throw unauthorizedError;
-            })
-            .json();
-    })
-    .catcher(500, async (error) => {
-        throw new CriticalError(error);
-    })
-    .catcher(403, async (error) => {
-        throw new AccessPermissionError(error);
-    })
+    .middlewares([CSRFTokenMiddleware])
+    .catcher(401, unauthorizedHandler)
+    .catcher(403, unauthorizedHandler)
+    .catcher(422, csrfTokenErrorHandler)
+    .catcher(500, criticalErrorHandler)
     .addon(FormDataAddon)
     .addon(QueryStringAddon);
 
-function getApiWithAuth() {
-    return api.auth(transformTokenToHeaderValue(accessToken));
+function getApiWithTokens() {
+    console.log(csrfToken);
+    return api.auth(transformTokenToHeaderValue(accessToken)).headers({ [CSRF_TOKEN_HEADER_KEY]: csrfToken ?? "" });
 }
 
 export function get(url: string) {
-    return getApiWithAuth().get(url);
+    return getApiWithTokens().get(url);
 }
 
 export function post(url: string, body: unknown = null) {
-    return getApiWithAuth().post(body, url);
+    return getApiWithTokens().post(body, url);
 }
 
 export function postFormData(url: string, data: object) {
-    return getApiWithAuth().url(url).formData(data).post();
+    return getApiWithTokens().url(url).formData(data).post();
 }
 
 export function del(url: string) {
-    return getApiWithAuth().delete(url);
+    return getApiWithTokens().delete(url);
 }
 
 export async function authenticate(username: string, password: string) {
-    const { access_token } = await postFormData("/auth/token", {
+    const data = await postFormData("/auth/token", {
         username,
         password,
-    }).json<TokenData>();
-    accessToken = access_token;
+    }).json<AccessTokenData>();
+    accessToken = data.access_token;
+}
+
+export async function fetchAccessToken() {
+    return await get("/auth/token").json<AccessTokenData>();
 }
 
 export async function logout() {

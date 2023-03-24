@@ -1,7 +1,7 @@
 export type UUID = string;
 export type Token = string;
 export type TokenType = string;
-export type TokenData = { access_token: Token; token_type: string };
+export type AccessTokenData = { access_token: Token; token_type: TokenType };
 
 export type UserDTO = {
     uuid: UUID;

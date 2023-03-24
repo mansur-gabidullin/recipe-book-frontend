@@ -4,7 +4,7 @@ import { Layout } from "./Layout";
 import { UserList } from "./UserList";
 import { PageNotFound } from "@/shared/components/PageNotFound";
 
-export function AdminPanel() {
+export function UsersRoutes() {
     return (
         <Routes>
             <Route element={<Layout />}>

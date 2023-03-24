@@ -5,7 +5,8 @@ import { ErrorBoundary as ReactErrorBoundary, type ErrorBoundaryProps, type Fall
 
 import { AccessPermissionError, AuthenticationError } from "../exceptions";
 import { LOGIN_PAGE_ROUTE, noop } from "../constants";
-import { logout, setAuthRedirectLocation } from "../api";
+import { logout } from "../api";
+import { setAuthRedirectLocation } from "@/shared/helpers";
 
 export function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
     const location = useLocation();
@@ -17,14 +18,14 @@ export function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
             return;
         }
 
-        logout();
+        void logout();
         setAuthRedirectLocation(location.pathname);
         queryClient.clear();
         resetErrorBoundary();
     }, [isUnauthorized, location, queryClient, resetErrorBoundary]);
 
     return isUnauthorized ? (
-        <Navigate to={LOGIN_PAGE_ROUTE} />
+        <Navigate to={LOGIN_PAGE_ROUTE} replace />
     ) : (
         <div role="alert">
             <p>Что-то пошло не так:</p>

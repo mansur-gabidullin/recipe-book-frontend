@@ -1,4 +1,4 @@
 import { memo } from "react";
-import { AdminPanel } from "./components/AdminPanel";
+import { UsersRoutes } from "./components/UsersRoutes";
 
-export default memo(AdminPanel);
+export default memo(UsersRoutes);
