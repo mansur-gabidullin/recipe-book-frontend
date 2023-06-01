@@ -1,8 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 
-import { App } from "@/app";
-import { reportWebVitals } from "@/app/reportWebVitals";
+import { App } from "@/1-app";
+import { reportWebVitals } from "@/1-app/reportWebVitals";
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 
