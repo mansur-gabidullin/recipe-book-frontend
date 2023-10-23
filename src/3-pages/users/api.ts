@@ -18,5 +18,5 @@ export async function createUser(formData: AddUserFormData) {
 }
 
 export async function deleteUser(uuid: UUID) {
-    return await del(`/users/${uuid}`).json();
+    return await del(`/users/${uuid}`).res();
 }

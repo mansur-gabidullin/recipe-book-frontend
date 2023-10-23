@@ -6,14 +6,18 @@ const usersQueryKey = ["users"];
 export function useUserList() {
     const queryClient = useQueryClient();
     const invalidateFetchUsers = async () => {
-        await queryClient.invalidateQueries(usersQueryKey);
+        await queryClient.invalidateQueries({ queryKey: usersQueryKey });
     };
 
-    const { data: users = [], isLoading: isUsersLoading } = useQuery(usersQueryKey, fetchUsers);
+    const { data: users = [], isLoading: isUsersLoading } = useQuery({ queryKey: usersQueryKey, queryFn: fetchUsers });
 
-    const { mutate: addUser, isLoading: isUserCreating } = useMutation(createUser, { onSuccess: invalidateFetchUsers });
+    const { mutate: addUser, isPending: isUserCreating } = useMutation({
+        mutationFn: createUser,
+        onSuccess: invalidateFetchUsers,
+    });
 
-    const { mutate: removeUser, isLoading: isUserDeleting } = useMutation(deleteUser, {
+    const { mutate: removeUser, isPending: isUserDeleting } = useMutation({
+        mutationFn: deleteUser,
         onSuccess: invalidateFetchUsers,
     });
 

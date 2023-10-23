@@ -5,16 +5,15 @@ import QueryStringAddon from "wretch/addons/queryString";
 import { QueryClient } from "@tanstack/react-query";
 
 import { CSRF_TOKEN_HEADER_KEY, DEFAULT_FAILURE_COUNT } from "@/7-shared/constants";
-import type { AccessTokenData, Token } from "@/3-pages/users/types";
+import type { AccessTokenData } from "@/3-pages/users/types";
 import { transformTokenToHeaderValue } from "@/7-shared/helpers";
 import { accessTokenQueryKey } from "@/7-shared/auth/constants";
 import { getAccessToken, setAccessToken } from "@/7-shared/auth/accessToken";
+import { getCsrfToken, removeCsrfToken, setCsrfToken } from "@/7-shared/csrfToken";
 
 import { AccessPermissionError, AuthenticationError, CriticalError, CSRFTokenError } from "./exceptions";
 
-let csrfToken: Token | null = null;
-
-function useErrorBoundary(error: unknown) {
+function throwOnError(error: unknown) {
     return error instanceof CriticalError || error instanceof SyntaxError || error instanceof TypeError;
 }
 
@@ -33,12 +32,11 @@ function onBeforeRetry(failureCount: number, error: unknown) {
 export const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-            useErrorBoundary,
-            onError,
+            throwOnError,
             retry: onBeforeRetry,
         },
         mutations: {
-            useErrorBoundary,
+            throwOnError,
             onError,
             retry: onBeforeRetry,
         },
@@ -48,7 +46,19 @@ export const queryClient = new QueryClient({
 function CSRFTokenMiddleware(next: FetchLike) {
     return async (url: string, opts: WretchOptions) => {
         const response = await next(url, opts);
-        csrfToken = response.headers.get(CSRF_TOKEN_HEADER_KEY);
+
+        const { method = "" } = opts;
+
+        if (["get", "head", "options"].includes(method.toLowerCase())) {
+            const token = response.headers.get(CSRF_TOKEN_HEADER_KEY);
+
+            if (token) {
+                setCsrfToken(token);
+            } else {
+                removeCsrfToken();
+            }
+        }
+
         return response;
     };
 }
@@ -71,7 +81,7 @@ async function unauthorizedHandler(error: WretchError, request: Wretch) {
 
     setAccessToken(data.access_token);
 
-    await queryClient.invalidateQueries(accessTokenQueryKey);
+    await queryClient.invalidateQueries({ queryKey: accessTokenQueryKey });
 
     // Replay the original request with new credentials
     return await request
@@ -83,12 +93,14 @@ async function unauthorizedHandler(error: WretchError, request: Wretch) {
 }
 
 function csrfTokenErrorHandler(error: WretchError, originalRequest: Wretch) {
-    const headers = originalRequest._options?.headers || { [CSRF_TOKEN_HEADER_KEY]: csrfToken };
+    const headers = originalRequest._options?.headers || { [CSRF_TOKEN_HEADER_KEY]: getCsrfToken() };
     const hasCSRFToken = Boolean(headers[CSRF_TOKEN_HEADER_KEY]);
 
     if (!hasCSRFToken) {
         throw new CSRFTokenError(error);
     }
+
+    throw error;
 }
 
 function criticalErrorHandler(error: WretchError) {
@@ -107,7 +119,7 @@ const api = wretch("/api")
 function getApiWithTokens() {
     return api
         .auth(transformTokenToHeaderValue(getAccessToken()))
-        .headers({ [CSRF_TOKEN_HEADER_KEY]: csrfToken ?? "" });
+        .headers({ [CSRF_TOKEN_HEADER_KEY]: getCsrfToken() ?? "" });
 }
 
 export function get(url: string) {
