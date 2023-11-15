@@ -4,7 +4,7 @@ import type { UserDTO, UUID } from "@/3-pages/users/types";
 import { mapUserDTOToUser } from "@/3-pages/users/mappers";
 
 export async function fetchUsersBin() {
-    return await get("/bin/users")
+    return await get("/bin")
         .json<UserDTO[]>()
         .then((users) => users.map(mapUserDTOToUser));
 }
