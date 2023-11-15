@@ -137,3 +137,7 @@ export function postFormData(url: string, data: object) {
 export function del(url: string) {
     return getApiWithTokens().delete(url);
 }
+
+export function put(url: string, body: unknown = null, queryData: object | string = "") {
+    return getApiWithTokens().query(queryData).put(body, url);
+}

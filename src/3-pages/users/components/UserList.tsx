@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { useUserList } from "../hooks/useUserList";
+import { Link } from "react-router-dom";
 
 export function UserList() {
     const { users, addUser, removeUser, isLoading } = useUserList();
@@ -93,6 +94,8 @@ export function UserList() {
                     </li>
                 ))}
             </ul>
+
+            <Link to="/admin-panel/bin">go to bin</Link>
         </>
     );
 }

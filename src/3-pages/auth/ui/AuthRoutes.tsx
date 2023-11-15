@@ -4,7 +4,7 @@ import { PageNotFound } from "@/7-shared/ui/PageNotFound";
 
 import { Login } from "./Login";
 
-export default function Auth() {
+export function AuthRoutes() {
     return (
         <Routes>
             <Route index element={<Navigate to="./login" replace />} />

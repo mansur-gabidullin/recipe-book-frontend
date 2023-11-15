@@ -5,8 +5,8 @@ import { defaultTheme, Provider, ProgressCircle } from "@adobe/react-spectrum";
 import { QueryClientProvider } from "@tanstack/react-query";
 
 import { queryClient } from "@/7-shared/api";
-import { Pages } from "@/3-pages";
 
+import { AppRoutes } from "./AppRoutes";
 import "./index.css";
 
 export function App() {
@@ -16,7 +16,7 @@ export function App() {
                 <QueryClientProvider client={queryClient}>
                     <Suspense fallback={<ProgressCircle aria-label="Загрузка…" isIndeterminate />}>
                         <BrowserRouter>
-                            <Pages />
+                            <AppRoutes />
                         </BrowserRouter>
                     </Suspense>
                 </QueryClientProvider>
